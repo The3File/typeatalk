@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+server_init(){
+   while read line; do
+      case $line in
+	 $'\x7f') printf '\e[D%s\e[D' " " ;;
+	 space) printf '%s' " " ;;
+	 "") printf '\n\r%s' "> " ;;
+	 *) printf '%s' "$line"
+      esac
+   done < <(for((;;)){ cat $server;})
+}
+
+main(){
+   server="./chat"
+   [[ -e $server ]] && rm $server
+   mkfifo $server
+   server_init
+}
+
+clear
+main

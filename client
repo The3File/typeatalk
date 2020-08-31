@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+client(){
+      read -sn1
+      [[ $REPLY == " " ]] && e="space" || e="$REPLY"
+      printf '%s\n' "$e" > $server
+}
+
+main(){
+   server="./chat"
+   [[ $1 ]] && u="$1" || read -p "Choose a username: " u
+   echo -e "$u er tilføjet\n" > $server
+   for((;;)){ client; }
+}
+
+clear
+main "$@"
