@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-main(){
-   server="chat"
-   [[ -e $server ]] && rm $server
-   mkfifo $server
-}
-
-clear
-main
+server="chat"
+[[ -e $server ]] && rm $server
+mkfifo $server
