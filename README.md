@@ -12,3 +12,4 @@
 ## At gøre
 
 - Skrive samtale til variabler, i stedet for bare at print til stdout for større kontrol over outputtet.
+- Fikse læse fra fifo i server_init
