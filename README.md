@@ -1,7 +1,7 @@
 # typeatalk [ alpha 0.0.1 ]
 
-### En samtale-emulator skrevet i ren bash (om ikke andet et forsøg)
-### Inspireret af (michacode) gamle tiders hackerfilm.
+#### En samtale-emulator skrevet i ren bash (om ikke andet et forsøg)
+#### Inspireret af (michacode) gamle tiders hackerfilm.
 
 ## Virker
 
