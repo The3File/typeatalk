@@ -1,16 +1,52 @@
 #!/usr/bin/env bash
 
+get_size(){ read -r LINES COLUMNS < <(stty size); }
+
+server_init(){
+   ((current_line=1,max_lines=LINES-2)); printf '\e[H'
+   printf '\e[0;%sr' "$max_lines"
+   while read line; do
+      printf '\e[s'
+      printf '\e[%sH' "$current_line"
+      case $line in
+	 " ") printf '%s' " " ;;
+	 useradd) ((current_line++)) ;;
+	 enter) ((current_line++)) ;;
+	 *) printf '\r%s' "$line"
+      esac
+      printf '\e[u'
+   done < <(for((;;)){ cat $server;}) &
+}
+
 client(){
-      read -sn1
-      [[ $REPLY == " " ]] && e="space" || e="$REPLY"
-      printf '%s\n' "$e" > $server
+   #for((;;)){ type_; sleep .01; }
+   compose
+}
+
+compose(){
+   printf '\e[%sH' "$LINES"
+   while IFS= read -rsn1 -p $'\r\e[K'"$u: $cht" chat; do
+      case "$chat" in
+         $'\177') [[ $cht ]] && cht="${cht%?}" ;;
+         $'\033') echo "[esc]" ;;
+         $'\015'|"") echo "enter" > $server; cht="" ;;
+         " "|*) cht+="$chat" ;;
+      esac
+      printf '\e[%sH' "$LINES"
+      echo -e "\r\e[K$u> $cht" > $server
+   done
 }
 
 main(){
-   server="./chat"
+   trap "printf '\e[m\e[2J\e[H\e[?25h'" EXIT
+   trap "get_size" WINCH
+   server="chat"
+
+   server_init
    [[ $1 ]] && u="$1" || read -p "Choose a username: " u
-   echo -e "$u er tilføjet\n" > $server
-   for((;;)){ client; }
+   echo -e "\n\r\e[K$u er tilføjet\n" > $server &
+   echo -e "useradd" > $server &
+   client
 }
 
 clear
