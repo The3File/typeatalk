@@ -7,7 +7,7 @@
 
 - Skrive noget og se det
 - Se en anden skrive (næsten)
-- Man kan afbryde hinanden i en sætning (feature not a bug)
+- Man kan afbryde hinanden i en sætning (feature?)
 
 ## At gøre
 
