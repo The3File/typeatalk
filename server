@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-server="chat"
-[[ -e $server ]] && rm $server
-mkfifo $server

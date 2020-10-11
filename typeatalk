@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+get_size(){ read -r LINES COLUMNS < <(stty size); }
+
+get_input(){
+   while read -rsn1 -p $'\r\e[K'"> ${reply}";do
+      case "${REPLY}" in
+	 # ENTER
+	 "")
+	    conversation+=("$username: $reply"); reply="" ;;
+	 # ESC
+	 $'\e'|"${3:-null}")
+	    break ;;
+	 # BACKSPACE
+	 $'\177'|$'\b')
+	    reply="${reply%?}" ;;
+	 # CHARACTERS
+	 ' '|*)
+	    reply+="${REPLY}";;
+      esac
+      print_conversation
+      printf '\e[%sH' "$LINES"
+   done
+}
+
+print_conversation(){
+   printf '\e[H\e[J'
+   printf '%s\n' "${conversation[@]}"
+   [[ $reply ]] && printf '\e[K%s' "$username> $reply" || printf '\e[K'
+}
+
+menu_input(){
+   cmds="[w]rite [p]rint [c]hange username"
+   while read -rsn1 -p $'\r\e[J'"$cmds: "; do
+      case ${REPLY} in
+	 w) get_input ;;
+	 c) read -r -p $'\r\e[K'"new username: " username ;;
+	 p) print_conversation ;;
+      esac
+      printf '\e[J\e[%sH' "$LINES"
+   done
+}
+
+main(){
+   trap 'get_size; print_conversation' SIGWINCH
+   get_size
+   printf '\e[2J\e[%sH' "$LINES"
+   menu_input
+}
+
+main
