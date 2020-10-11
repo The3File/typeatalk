@@ -31,7 +31,7 @@ print_conversation(){
 
 menu_input(){
    cmds="[w]rite [p]rint [c]hange username"
-   while read -rsn1 -p $'\r\e[J'"$cmds: "; do
+   while read -rsn1 -p $'\r\e[K'"$cmds: "; do
       case ${REPLY} in
 	 w) get_input ;;
 	 c) read -r -p $'\r\e[K'"new username: " username ;;
