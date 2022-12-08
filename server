@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
-server="chat"
-[[ -e $server ]] && rm $server
-mkfifo $server
+server_fifo="s_fifo"
+chat_fifo="c_fifo"
+[[ -e $server_fifo ]] && rm $server_fifo
+[[ -e $chat_fifo ]] && rm $chat_fifo
+mkfifo $server_fifo
+mkfifo $chat_fifo
 
 ((current_line=1,max_lines=LINES-2))
 declare -a linedone
@@ -15,13 +18,18 @@ enter_func(){
 	printf '%s\n' "${line_done[@]}"
 }
 
-while read char; do
-	case $char in
-		enter|useradd) enter_func ;;
-		delete) line="${line%?}" ;;
-		" "|*) line+="$char"
-	esac
-	printf '%s' "$line"
-done < <(cat $server)
+serve(){
+	while read -r char; do
+		case $char in
+			enter|useradd) enter_func ;;
+			delete) line="${line%?}" ;;
+			" "|*) line+="$char"
+		esac
+		printf '%s' "$line"
+	done < $server_fifo
+}
+
+exec 3<>$chat_fifo
+serve >&3
 
 printf '\n%s\n' "pipe closed"
