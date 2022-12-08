@@ -27,13 +27,22 @@ compose(){
    done
 }
 
+print_server(){
+	while read -r server_output; do
+		printf '%s' "$((LINES-1))" "$server_output"
+		printf '\e[%sH' "$LINES"
+	done <$chat_fifo
+}
+
 main(){
 	trap 'exec 3>&-' EXIT
    trap "printf '\e[m\e[2J\e[H\e[?25h'" EXIT
    trap "get_size" WINCH
 
 	server_fifo=s_fifo
-	server_out=c_fifo
+	chat_fifo=c_fifo
+
+	print_server &
 
 	exec 3<>$server_fifo
    [[ $1 ]] && u="$1" || read -p "Choose a username: " u
@@ -42,4 +51,5 @@ main(){
    menu
 }
 
+get_size
 main "$@"

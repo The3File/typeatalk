@@ -14,8 +14,8 @@ printf '\e[H\e[J'
 
 enter_func(){
 	line_done+=("$line"); char=""
-	printf '\e[H\e[J'
-	printf '%s\n' "${line_done[@]}"
+	printf '\e[H\e[J' >&3
+	printf '%s\n' "${line_done[@]}" >&3
 }
 
 serve(){
@@ -25,11 +25,11 @@ serve(){
 			delete) line="${line%?}" ;;
 			" "|*) line+="$char"
 		esac
-		printf '%s' "$line"
+		printf '%s' "$line" >&3
 	done < $server_fifo
 }
 
 exec 3<>$chat_fifo
-serve >&3
+serve
 
 printf '\n%s\n' "pipe closed"
