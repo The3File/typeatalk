@@ -8,48 +8,48 @@ print_bar(){
 }
 
 menu(){
-   printf '\e[H\e[J' "$LINES"
-   while IFS= read -rsn1 char; do
-      case $char in
+	printf '\e[H\e[J' "$LINES"
+	while IFS= read -rsn1 char; do
+		case $char in
 			i) char=""; compose ;;
 			q) exit 0
-      esac
-	print_bar ""
-   done
+		esac
+		print_bar ""
+	done
 }
 
 compose(){
 	mode="insert"
 	print_bar "$chat"
-   while IFS= read -rsn1 char; do
-      case "$char" in
-         $'\177') [[ $chat ]] && { echo "delete" >&3; chat="${chat%?}"; } ;;
-         $'\033') send; echo esc >&3; break ;;
-         $'\015'|'') send; echo "enter" >&3; chat="" ;;
-         " "|*) chat+="$char" ;;
-      esac
+	while IFS= read -rsn1 char; do
+		case "$char" in
+			$'\177') [[ $chat ]] && { echo "delete" >&3; chat="${chat%?}"; } ;;
+			$'\033') send; echo esc >&3; break ;;
+			$'\015'|'') send; echo "enter" >&3; chat="" ;;
+			" "|*) chat+="$char" ;;
+		esac
 		print_bar "$chat"
 		send
-   done
+	done
 	mode="normal"
 }
 
 main(){
 	trap 'exec 3>&-' EXIT
-   trap "printf '\e[m\e[2J\e[H\e[?25h'" EXIT
-   trap "get_size" WINCH
+	trap "printf '\e[m\e[2J\e[H\e[?25h'" EXIT
+	trap "get_size" WINCH
 
 	server_fifo=s_fifo
 	chat_fifo=c_fifo
 
 	cat $chat_fifo &
-	
+
 	exec 3<>$server_fifo
-   [[ $1 ]] && u="$1" || read -p "Choose a username: " u
-   echo -e "\n\r\e[K$u connected\n" >&3
-   echo -e "useradd" >&3
+	[[ $1 ]] && u="$1" || read -p "Choose a username: " u
+	echo -e "\n\r\e[K$u connected\n" >&3
+	echo -e "useradd" >&3
 	move_cursor_bottom
-   menu
+	menu
 }
 
 get_size
