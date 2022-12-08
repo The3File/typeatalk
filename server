@@ -1,16 +1,13 @@
 #!/usr/bin/env bash
 
 server_fifo="s_fifo"
-chat_fifo="c_fifo"
 [[ -e $server_fifo ]] && rm $server_fifo
-[[ -e $chat_fifo ]] && rm $chat_fifo
 mkfifo $server_fifo
+chat_fifo="c_fifo"
+[[ -e $chat_fifo ]] && rm $chat_fifo
 mkfifo $chat_fifo
 
 ((current_line=1,max_lines=LINES-2))
-declare -a linedone
-line=""
-printf '\e[H\e[J'
 
 enter_func(){
 	line_done+=("$line"); char=""
@@ -18,18 +15,16 @@ enter_func(){
 	printf '%s\n' "${line_done[@]}" >&3
 }
 
-serve(){
-	while read -r char; do
-		case $char in
-			enter|useradd) enter_func ;;
-			delete) line="${line%?}" ;;
-			" "|*) line+="$char"
-		esac
-		printf '%s' "$line" >&3
-	done < $server_fifo
-}
-
 exec 3<>$chat_fifo
-serve
+
+while read -r char; do
+	case $char in
+		enter|useradd) enter_func ;;
+		delete) line="${line%?}" ;;
+		esc) ;;
+		" "|*) line+="$char"
+	esac
+	printf '\e[s\e[%sH\n%s\e[u' "${#line_done[@]}" "$line" >&3
+done < $server_fifo
 
 printf '\n%s\n' "pipe closed"

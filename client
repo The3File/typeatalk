@@ -2,36 +2,36 @@
 
 get_size(){ read -r LINES COLUMNS < <(stty size); }
 send(){ echo -e "\r\e[K$u> $chat" >&3; }
+print_bar(){
+	printf '\e[%sH' "$LINES"
+	printf '\r\e[K%s\e[s' "$u [$mode]: $1"
+}
 
 menu(){
-	get_size
-   printf '\e[H\e[J\e[%sH' "$LINES"
-   while IFS= read -rsn1 -p $'\r\e[K'"$u [normal]" char; do
+   printf '\e[H\e[J' "$LINES"
+   while IFS= read -rsn1 char; do
       case $char in
 			i) char=""; compose ;;
 			q) exit 0
       esac
+	print_bar ""
    done
 }
 
 compose(){
-   while IFS= read -rsn1 -p $'\r\e[K'"$u [insert]: $chat" char; do
-      printf '\e[%sH' "$LINES"
+	mode="insert"
+	print_bar "$chat"
+   while IFS= read -rsn1 char; do
       case "$char" in
          $'\177') [[ $chat ]] && { echo "delete" >&3; chat="${chat%?}"; } ;;
          $'\033') send; echo esc >&3; break ;;
          $'\015'|'') send; echo "enter" >&3; chat="" ;;
          " "|*) chat+="$char" ;;
       esac
+		print_bar "$chat"
 		send
    done
-}
-
-print_server(){
-	while read -r server_output; do
-		printf '%s' "$((LINES-1))" "$server_output"
-		printf '\e[%sH' "$LINES"
-	done <$chat_fifo
+	mode="normal"
 }
 
 main(){
@@ -42,12 +42,13 @@ main(){
 	server_fifo=s_fifo
 	chat_fifo=c_fifo
 
-	print_server &
-
+	cat $chat_fifo &
+	
 	exec 3<>$server_fifo
    [[ $1 ]] && u="$1" || read -p "Choose a username: " u
    echo -e "\n\r\e[K$u connected\n" >&3
    echo -e "useradd" >&3
+	move_cursor_bottom
    menu
 }
 
