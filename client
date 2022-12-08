@@ -2,25 +2,6 @@
 
 get_size(){ read -r LINES COLUMNS < <(stty size); }
 
-server_init(){
-   ((current_line=1,max_lines=LINES-2))
-   linedone=(); line=""
-   printf '\e[0;%sr\e[H' "$max_lines"
-   #printf '\e[s\e[%sH\e[J' "$current_line"
-
-   while read char; do
-      printf '\e[s'
-      case $char in
-	 useradd) char=""; linedone+=("$line") ;;
-	 enter) char=""; linedone+=("$line") ;;
-	 delete) line="${line%?}" ;;
-	 " "|*) line+="$char"
-      esac
-      printf '\e[H%s\n' "${linedone[@]}"
-      printf '\e[u'
-   done < <(for((;;)){ cat $server;}) &
-}
-
 client(){
    printf '\e[%sH' "$LINES"
    while IFS= read -rsn1 -p $'\r\e[K'"command: $cht" chat; do
@@ -36,28 +17,28 @@ compose(){
    while IFS= read -rsn1 -p $'\r\e[K'"$u: $cht" chat; do
       printf '\e[%sH' "$LINES"
       case "$chat" in
-         $'\177') [[ $cht ]] && { echo "delete" > $server; cht="${cht%?}"; } ;;
+         $'\177') [[ $cht ]] && { echo "delete" >&3; cht="${cht%?}"; } ;;
          $'\033') echo "esc" ;;
-         $'\015'|'') echo "enter" > $server; cht="" ;;
+         $'\015'|'') echo "enter" >&3; cht="" ;;
          " "|*) cht+="$chat" ;;
       esac
-      echo -e "\r\e[K$u> $cht" > $server
+      echo -e "\r\e[K$u> $cht" >&3
    done
 }
 
 main(){
+	trap 'exec 3-&-' EXIT
    #trap "printf '\e[?1049l'" EXIT
    #printf '\e[?1049h'
    trap "printf '\e[m\e[2J\e[H\e[?25h'" EXIT
    trap "get_size" WINCH
 
-   server="chat"
-   [[ -e "$server" ]] || exit 1
+	server=chat
 
-   server_init
+	exec 3>$server
    [[ $1 ]] && u="$1" || read -p "Choose a username: " u
-   echo -e "\n\r\e[K$u er tilføjet\n" > $server
-   echo -e "useradd" > $server
+   echo -e "\n\r\e[K$u er tilføjet\n" >&3
+   echo -e "useradd" >&3
    client
 }
 

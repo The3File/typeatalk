@@ -3,3 +3,25 @@
 server="chat"
 [[ -e $server ]] && rm $server
 mkfifo $server
+
+((current_line=1,max_lines=LINES-2))
+declare -a linedone
+line=""
+printf '\e[H\e[J'
+
+enter_func(){
+	line_done+=("$line"); char=""
+	printf '\e[H\e[J'
+	printf '%s\n' "${line_done[@]}"
+}
+
+while read char; do
+	case $char in
+		enter|useradd) enter_func ;;
+		delete) line="${line%?}" ;;
+		" "|*) line+="$char"
+	esac
+	printf '%s' "$line"
+done < <(cat $server)
+
+printf '\n%s\n' "pipe closed"
