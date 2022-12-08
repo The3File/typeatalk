@@ -1,22 +1,27 @@
 #!/usr/bin/env bash
 
-server_init(){
-   while read line; do
-      case $line in
-	 $'\x7f') printf '\e[D%s\e[D' " " ;;
-	 space) printf '%s' " " ;;
-	 "") printf '\n\r%s' "> " ;;
-	 *) printf '%s' "$line"
-      esac
-   done < <(for((;;)){ cat $server;})
+server="chat"
+[[ -e $server ]] && rm $server
+mkfifo $server
+
+((current_line=1,max_lines=LINES-2))
+declare -a linedone
+line=""
+printf '\e[H\e[J'
+
+enter_func(){
+	line_done+=("$line"); char=""
+	printf '\e[H\e[J'
+	printf '%s\n' "${line_done[@]}"
 }
 
-main(){
-   server="./chat"
-   [[ -e $server ]] && rm $server
-   mkfifo $server
-   server_init
-}
+while read char; do
+	case $char in
+		enter|useradd) enter_func ;;
+		delete) line="${line%?}" ;;
+		" "|*) line+="$char"
+	esac
+	printf '%s' "$line"
+done < <(cat $server)
 
-clear
-main
+printf '\n%s\n' "pipe closed"

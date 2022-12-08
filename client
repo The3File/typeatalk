@@ -1,16 +1,45 @@
 #!/usr/bin/env bash
 
+get_size(){ read -r LINES COLUMNS < <(stty size); }
+
 client(){
-      read -sn1
-      [[ $REPLY == " " ]] && e="space" || e="$REPLY"
-      printf '%s\n' "$e" > $server
+   printf '\e[%sH' "$LINES"
+   while IFS= read -rsn1 -p $'\r\e[K'"command: $cht" chat; do
+      case $chat in
+         $'\177') [[ $cht ]] && cht="${cht%?}" ;;
+	 '') [[ $cht = "compose" ]] && { cht=""; compose; } ;;
+	 " "|*) cht+="$chat" ;;
+      esac
+   done
+}
+
+compose(){
+   while IFS= read -rsn1 -p $'\r\e[K'"$u: $cht" chat; do
+      printf '\e[%sH' "$LINES"
+      case "$chat" in
+         $'\177') [[ $cht ]] && { echo "delete" >&3; cht="${cht%?}"; } ;;
+         $'\033') echo "esc" ;;
+         $'\015'|'') echo "enter" >&3; cht="" ;;
+         " "|*) cht+="$chat" ;;
+      esac
+      echo -e "\r\e[K$u> $cht" >&3
+   done
 }
 
 main(){
-   server="./chat"
+	trap 'exec 3-&-' EXIT
+   #trap "printf '\e[?1049l'" EXIT
+   #printf '\e[?1049h'
+   trap "printf '\e[m\e[2J\e[H\e[?25h'" EXIT
+   trap "get_size" WINCH
+
+	server=chat
+
+	exec 3>$server
    [[ $1 ]] && u="$1" || read -p "Choose a username: " u
-   echo -e "$u er tilføjet\n" > $server
-   for((;;)){ client; }
+   echo -e "\n\r\e[K$u er tilføjet\n" >&3
+   echo -e "useradd" >&3
+   client
 }
 
 clear
