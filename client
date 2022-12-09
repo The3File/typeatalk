@@ -1,28 +1,28 @@
 #!/usr/bin/env bash
 
 get_size(){ read -r LINES COLUMNS < <(stty size); }
+send(){ echo -e "\r\e[K$u> $cht" >&3; }
 
 client(){
    printf '\e[%sH' "$LINES"
-   while IFS= read -rsn1 -p $'\r\e[K'"command: $cht" chat; do
+	while IFS= read -rsn1 -p $'\r\e[K'"-- NORMAL -- ($u): " chat; do
       case $chat in
-         $'\177') [[ $cht ]] && cht="${cht%?}" ;;
-	 '') [[ $cht = "compose" ]] && { cht=""; compose; } ;;
-	 " "|*) cht+="$chat" ;;
+	 		i) compose ;;
+	 		q) exit ;;
       esac
    done
 }
 
 compose(){
-   while IFS= read -rsn1 -p $'\r\e[K'"$u: $cht" chat; do
+	while IFS= read -rsn1 -p $'\r\e[K'"-- INSERT -- ($u): $cht" chat; do
       printf '\e[%sH' "$LINES"
       case "$chat" in
          $'\177') [[ $cht ]] && { echo "delete" >&3; cht="${cht%?}"; } ;;
-         $'\033') echo "esc" ;;
-         $'\015'|'') echo "enter" >&3; cht="" ;;
+			$'\033') send; break ;;
+         $'\015'|'') send; echo "enter" >&3; cht="" ;;
          " "|*) cht+="$chat" ;;
       esac
-      echo -e "\r\e[K$u> $cht" >&3
+		send
    done
 }
 
